@@ -1,0 +1,14 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* This file is for your main application CSS */
+@layer components {
+.anim {
+    @apply ease-in-out duration-500 transform transition-transform;
+}
+
+.choice-button {
+    @apply px-8 py-4 anim bg-blue-900 hover:shadow-2xl shadow-blue-300 hover:bg-blue-800 hover:ring active:bg-blue-700 active:scale-95 ring-cyan-600 text-gray-50 rounded-xl shadow-lg hover:shadow-blue-300;
+}
+}
