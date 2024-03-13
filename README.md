@@ -2,11 +2,11 @@
 
 ## Stack:
 
-- Elixir, Phoenix Framework
+- Python, Flask 
 
-- PostreSQL
+- SQlite 
 
-- Tailwind
+- Html, Css
 
 ## To start your Phoenix server:
 
