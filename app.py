@@ -53,6 +53,18 @@ def register():
     return render_template('register.html')
 
 
+@app.route('/problems')
+def problems():
+    if 'email' in session:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('SELECT * FROM problems')
+        problems = c.fetchall()
+        conn.close()
+        return render_template('problems.html', problems=problems)
+    return redirect(url_for('login'))
+
+
 @app.route('/logout')
 def logout():
     session.pop('email', None)
