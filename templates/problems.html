@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem Sets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Problem Sets</h1>
+        <div class="problems">
+            {% for problem in problems %}
+            <div class="problem">
+                <div class="problem-header">
+                    <span class="problem-id">Problem ID: {{ problem[0] }}</span>
+                    <h2>{{ problem[1] }}</h2>
+                </div>
+                <p>{{ problem[2] }}</p>
+                <a href="#" class="btn">Submit Solution</a>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="/logout" class="btn">Logout</a>
+    </div>
+</body>
+</html>
