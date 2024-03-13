@@ -18,6 +18,23 @@ def index():
     return render_template('index.html')
 
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('SELECT * FROM users WHERE email=? AND password=?', (email, password))
+        if c.fetchone():
+            session['email'] = email
+            return redirect(url_for('problems'))
+        else:
+            return 'Invalid email/password. Please try again.'
+    return render_template('login.html')
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
