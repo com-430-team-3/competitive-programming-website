@@ -18,5 +18,23 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        try:
+            c.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, password))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            conn.close()
+            return 'Email already exists. Please use a different email.'
+    return render_template('register.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
