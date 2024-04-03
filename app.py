@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 import os
 
@@ -17,8 +17,6 @@ conn.close()
 def index():
     return render_template('index.html')
 
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -27,13 +25,15 @@ def login():
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE email=? AND password=?', (email, password))
-        if c.fetchone():
+        user = c.fetchone()
+        conn.close()
+        if user:
             session['email'] = email
-            return redirect(url_for('problems'))
+            session['is_admin'] = user[3]
+            return redirect(url_for('dashboard'))
         else:
-            return 'Invalid email/password. Please try again.'
+            flash('Invalid email/password. Please try again.', 'error')
     return render_template('login.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -43,13 +43,14 @@ def register():
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
         try:
-            c.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, password))
+            c.execute('INSERT INTO users (email, password, is_admin) VALUES (?, ?, ?)', (email, password, 0))
             conn.commit()
             conn.close()
+            flash('Registration successful. Please log in.', 'success')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
+            flash('Email already exists. Please use a different email.', 'error')
             conn.close()
-            return 'Email already exists. Please use a different email.'
     return render_template('register.html')
 
 
