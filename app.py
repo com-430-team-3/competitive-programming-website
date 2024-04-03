@@ -5,13 +5,26 @@ import os
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Database initialization
-conn = sqlite3.connect('database.db')
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT UNIQUE, password TEXT)''')
-c.execute('''CREATE TABLE IF NOT EXISTS problems (id INTEGER PRIMARY KEY, problem_text TEXT, solved BOOLEAN)''')
-conn.commit()
-conn.close()
+def create_database_with_problems():
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT UNIQUE, password TEXT, is_admin INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS problems (id INTEGER PRIMARY KEY, title TEXT, description TEXT, difficulty TEXT, input_examples TEXT, output_examples TEXT, test_input TEXT, test_output TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY, user_id INTEGER, problem_id INTEGER, code TEXT, result TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+
+    # Check if the admin account exists, if not, create it
+    c.execute("SELECT * FROM users WHERE email='admin@example.com'")
+    admin_exists = c.fetchone()
+    if not admin_exists:
+        c.execute("INSERT INTO users (email, password, is_admin) VALUES ('admin@example.com', 'admin_password', 1)")
+
+    # Check if problems exist, if not, create some sample problems
+
+
+    conn.commit()
+    conn.close()
+
+create_database_with_problems()
 
 @app.route('/')
 def index():
