@@ -80,6 +80,39 @@ def dashboard():
             return render_template('user_dashboard.html', problems=problems)
     return redirect(url_for('login'))
 
+@app.route('/add_problem', methods=['GET', 'POST'])
+def add_problem():
+    if 'email' in session and session['is_admin']:
+        if request.method == 'POST':
+            title = request.form['title']
+            description = request.form['description']
+            difficulty = request.form['difficulty']
+            input_examples = request.form['input_examples']
+            output_examples = request.form['output_examples']
+            test_input_file = request.files['test_input']
+            test_output_file = request.files['test_output']
+            
+            # Save uploaded files
+            test_input_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_input_file.filename)
+            test_input_file.save(test_input_filename)
+            test_output_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_output_file.filename)
+            test_output_file.save(test_output_filename)
+            
+            conn = sqlite3.connect('database.db')
+            c = conn.cursor()
+            c.execute("INSERT INTO problems (title, description, difficulty, input_examples, output_examples, test_input, test_output) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                    (title, description, difficulty, input_examples, output_examples, test_input_filename, test_output_filename))
+            conn.commit()
+            conn.close()
+            
+            flash('Problem added successfully', 'success')
+            return redirect(url_for('dashboard'))
+        
+        return render_template('add_problem.html')
+    else:
+        flash('You need to log in as admin to add a problem.', 'error')
+        return redirect(url_for('login'))
+    
 @app.route('/problems')
 def problems():
     if 'email' in session:
