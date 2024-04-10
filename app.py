@@ -66,6 +66,19 @@ def register():
             conn.close()
     return render_template('register.html')
 
+@app.route('/dashboard')
+def dashboard():
+    if 'email' in session:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM problems")
+        problems = c.fetchall()
+        conn.close()
+        if session['is_admin']:
+            return render_template('admin_dashboard.html', problems=problems)
+        else:
+            return render_template('user_dashboard.html', problems=problems)
+    return redirect(url_for('login'))
 
 @app.route('/problems')
 def problems():
