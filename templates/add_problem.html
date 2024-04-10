@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Problem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Add Problem</h1>
+        <form action="{{ url_for('add_problem') }}" method="POST" enctype="multipart/form-data">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required><br><br>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="4" required></textarea><br><br>
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty" name="difficulty" required>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+            </select><br><br>
+            <label for="input_examples">Input Examples:</label>
+            <textarea id="input_examples" name="input_examples" rows="4" required></textarea><br><br>
+            <label for="output_examples">Output Examples:</label>
+            <textarea id="output_examples" name="output_examples" rows="4" required></textarea><br><br>
+            <label for="test_input">Test Input (.txt only):</label>
+            <input type="file" id="test_input" name="test_input" accept=".txt" required><br><br>
+            <label for="test_output">Test Output (.txt only):</label>
+            <input type="file" id="test_output" name="test_output" accept=".txt" required><br><br>
+            <button class="btn" type="submit">Add Problem</button>
+        </form>
+        <a class="btn" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    </div>
+</body>
+
+</html>

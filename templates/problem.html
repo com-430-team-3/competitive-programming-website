@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>{{ problem[1] }}</h1>
+        <p>{{ problem[2] }}</p>
+        <!-- Form for code submission -->
+        <form action="/submit_solution/{{ problem[0] }}" method="POST">
+            <label for="code">Your Solution:</label>
+            <textarea id="code" name="code" rows="10" cols="50"></textarea><br><br>
+            <label for="language">Select Language:</label>
+            <select id="language" name="language">
+                <option value="Python">Python</option>
+                <option value="Java">Java</option>
+                <option value="C++">C++</option>
+            </select><br><br>
+            <button type="submit" class="btn">Submit Solution</button>
+        </form>
+        <a href="/problems" class="btn">Back to Problems</a>
+        {% if session['is_admin'] %}
+        <a href="{{ url_for('edit_problem', problem_id=problem[0]) }}" class="btn">Edit Problem</a>
+        {% endif %}
+        <a href="/logout" class="btn">Logout</a>
+
+        <!-- Table to display results for admin -->
+        <h2>Submission Results</h2>
+        <table>
+            <tr>
+                <th>User</th>
+                <th>Code</th>
+                <th>Language</th>
+                <th>Result</th>
+            </tr>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ submission[0] }}</td>
+                <td>{{ submission[1] }}</td>
+                <td>{{ submission[2] }}</td>
+                <td>{{ submission[3] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>
