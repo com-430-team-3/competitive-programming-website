@@ -124,6 +124,39 @@ def add_problem():
         flash('You need to log in as admin to add a problem.', 'error')
         return redirect(url_for('login'))
     
+@app.route('/view_problem/<int:problem_id>', methods=['GET', 'POST'])
+def view_problem(problem_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM problems WHERE id = ?', (problem_id,))
+    problem = c.fetchone()
+
+    if request.method == 'POST':
+        solution = request.form['solution']
+        language = request.form['language']
+        
+        # Get problem's test input and output
+        test_input = problem[6]
+        test_output = problem[7]
+        
+        print("TESTS")
+        print(test_input)
+        print(test_output)
+        # Check the correctness of the code
+        result = check_code(test_input, test_output, solution, language)
+            # Get user id
+        c.execute('SELECT id FROM users WHERE email=?', (session['email'],))
+        user_id = c.fetchone()[0]
+
+        # Insert submission into database
+        c.execute("INSERT INTO submissions (user_id, problem_id, code, result) VALUES (?, ?, ?, ?)", (user_id, problem_id, solution, result))
+        conn.commit()
+        conn.close()
+
+        return render_template('view_problem.html', problem=problem, result=result)
+
+    return render_template('view_problem.html', problem=problem)
+
 @app.route('/problems')
 def problems():
     if 'email' in session:
