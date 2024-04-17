@@ -80,6 +80,17 @@ def dashboard():
             return render_template('user_dashboard.html', problems=problems)
     return redirect(url_for('login'))
 
+@app.route('/delete_problem/<int:problem_id>', methods=['POST'])
+def delete_problem(problem_id):
+    if 'email' in session and session['is_admin']:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM problems WHERE id=?", (problem_id,))
+        conn.commit()
+        conn.close()
+        flash('Problem deleted successfully', 'success')
+    return redirect(url_for('dashboard'))
+
 @app.route('/add_problem', methods=['GET', 'POST'])
 def add_problem():
     if 'email' in session and session['is_admin']:
