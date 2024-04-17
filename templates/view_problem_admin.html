@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Problem (Admin)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>{{ problem[1] }}</h1>
+        <p>Description: {{ problem[2] }}</p>
+
+        <h2>Submit Solution</h2>
+        <form action="{{ url_for('view_problem_admin', problem_id=problem[0]) }}" method="POST">
+            <label for="solution">Solution:</label><br>
+            <textarea id="solution" name="solution" rows="4" cols="50" required></textarea><br>
+            <button type="submit" class="btn">Submit Solution</button>
+        </form>
+
+        <a href="{{ url_for('admin_dashboard') }}" class="btn">Back to Dashboard</a>
+    </div>
+</body>
+
+</html>
