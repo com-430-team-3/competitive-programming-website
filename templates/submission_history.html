@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Submission History</title>
+</head>
+
+<body>
+    <h1>Submission History</h1>
+    <table>
+        <tr>
+            <th>Submission ID</th>
+            <th>Problem ID</th>
+            <th>Result</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for submission in submissions %}
+        <tr>
+            <td>{{ submission[0] }}</td>
+            <td>{{ submission[2] }}</td>
+            <td>{{ submission[3] }}</td>
+            <td>{{ submission[4] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>
