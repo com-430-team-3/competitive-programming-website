@@ -1,9 +1,59 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 import os
+import subprocess
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = 'uploads'  # Add this line to configure the upload folder
+
+# Function to check the correctness of the code
+def check_code(input_file_path, output_data, code, language):
+    # Read input data from file
+    with open(input_file_path, 'r') as input_file:
+        input_data = input_file.read()
+
+    with open(output_data, 'r') as output_file:
+        output_data = output_file.read()
+
+    # Print the type and content of input data
+    print("Input data type:", type(input_data))
+    print("Input data content:", input_data)
+
+    print("OUT data type:", type(output_data))
+    print("OUT data content:", output_data)
+
+    # Execute the code
+    if language == "C++":
+        compile_process = subprocess.Popen(['g++', '-o', 'temp', '-x', 'c++', '-'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        compile_stdout, compile_stderr = compile_process.communicate(input=code)
+        if compile_stderr:
+            return "Compilation Error: " + compile_stderr
+
+        execute_process = subprocess.Popen(['./temp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        execute_stdout, execute_stderr = execute_process.communicate(input=input_data)
+    elif language == "Python":
+        execute_process = subprocess.Popen(['python3', '-c', code], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        execute_stdout, execute_stderr = execute_process.communicate(input=input_data)
+    else:
+        return "Unsupported language"
+
+    print("execute_stdout")
+    print(execute_stdout)
+    if execute_stderr:
+        return "Runtime Error: " + execute_stderr
+
+    print("RES")
+    print(execute_stdout.strip())
+    print("OUT")
+    print(output_data.strip())
+    # Compare output
+    if execute_stdout.strip() == output_data.strip():
+        return "Accepted"
+    else:
+        return "Wrong Answer"
+
+
 
 def create_database_with_problems():
     conn = sqlite3.connect('database.db')
@@ -91,39 +141,26 @@ def delete_problem(problem_id):
         flash('Problem deleted successfully', 'success')
     return redirect(url_for('dashboard'))
 
-@app.route('/add_problem', methods=['GET', 'POST'])
-def add_problem():
+@app.route('/problem_submissions/<int:problem_id>')
+def problem_submissions(problem_id):
     if 'email' in session and session['is_admin']:
-        if request.method == 'POST':
-            title = request.form['title']
-            description = request.form['description']
-            difficulty = request.form['difficulty']
-            input_examples = request.form['input_examples']
-            output_examples = request.form['output_examples']
-            test_input_file = request.files['test_input']
-            test_output_file = request.files['test_output']
-            
-            # Save uploaded files
-            test_input_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_input_file.filename)
-            test_input_file.save(test_input_filename)
-            test_output_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_output_file.filename)
-            test_output_file.save(test_output_filename)
-            
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute("INSERT INTO problems (title, description, difficulty, input_examples, output_examples, test_input, test_output) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                    (title, description, difficulty, input_examples, output_examples, test_input_filename, test_output_filename))
-            conn.commit()
-            conn.close()
-            
-            flash('Problem added successfully', 'success')
-            return redirect(url_for('dashboard'))
-        
-        return render_template('add_problem.html')
-    else:
-        flash('You need to log in as admin to add a problem.', 'error')
-        return redirect(url_for('login'))
-    
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+
+        # Query submissions for this problem
+        c.execute('SELECT submissions.id, users.email, submissions.code, submissions.result, submissions.timestamp FROM submissions INNER JOIN users ON submissions.user_id = users.id WHERE problem_id = ?', (problem_id,))
+        submissions = c.fetchall()
+        conn.close()
+
+        return render_template('problem_submissions.html', submissions=submissions)
+    return redirect(url_for('login'))
+
+@app.route('/logout')
+def logout():
+    session.pop('email', None)
+    session.pop('is_admin', None)
+    return redirect(url_for('login'))
+
 @app.route('/view_problem/<int:problem_id>', methods=['GET', 'POST'])
 def view_problem(problem_id):
     conn = sqlite3.connect('database.db')
@@ -157,22 +194,122 @@ def view_problem(problem_id):
 
     return render_template('view_problem.html', problem=problem)
 
-@app.route('/problems')
-def problems():
+
+@app.route('/user_submissions/<int:problem_id>')
+def user_submissions(problem_id):
     if 'email' in session:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute('SELECT * FROM problems')
-        problems = c.fetchall()
+
+        # Get user id
+        c.execute('SELECT id FROM users WHERE email=?', (session['email'],))
+        user_id = c.fetchone()[0]
+
+        # Query submissions for this problem by this user
+        c.execute('SELECT * FROM submissions WHERE problem_id = ? AND user_id = ?', (problem_id, user_id))
+        submissions = c.fetchall()
         conn.close()
-        return render_template('problems.html', problems=problems)
+
+        return render_template('user_submissions.html', submissions=submissions, email=session['email'])
+    return redirect(url_for('login'))
+
+@app.route('/submission_history')
+def submission_history():
+    if 'email' in session:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('SELECT id FROM users WHERE email=?', (session['email'],))
+        user_id = c.fetchone()[0]
+        c.execute('SELECT * FROM submissions WHERE user_id=? ORDER BY timestamp DESC', (user_id,))
+        submissions = c.fetchall()
+        conn.close()
+        return render_template('submission_history.html', submissions=submissions)
+    return redirect(url_for('login'))
+
+@app.route('/admin/submissions')
+def admin_submissions():
+    if 'email' in session and session['is_admin']:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('SELECT * FROM submissions ORDER BY timestamp DESC')
+        submissions = c.fetchall()
+        conn.close()
+        return render_template('admin_submissions.html', submissions=submissions)
     return redirect(url_for('login'))
 
 
-@app.route('/logout')
-def logout():
-    session.pop('email', None)
+@app.route('/add_problem', methods=['GET', 'POST'])
+def add_problem():
+    if 'email' in session and session['is_admin']:
+        if request.method == 'POST':
+            title = request.form['title']
+            description = request.form['description']
+            difficulty = request.form['difficulty']
+            input_examples = request.form['input_examples']
+            output_examples = request.form['output_examples']
+            test_input_file = request.files['test_input']
+            test_output_file = request.files['test_output']
+            
+            # Save uploaded files
+            test_input_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_input_file.filename)
+            test_input_file.save(test_input_filename)
+            test_output_filename = os.path.join(app.config['UPLOAD_FOLDER'], test_output_file.filename)
+            test_output_file.save(test_output_filename)
+            
+            conn = sqlite3.connect('database.db')
+            c = conn.cursor()
+            c.execute("INSERT INTO problems (title, description, difficulty, input_examples, output_examples, test_input, test_output) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                    (title, description, difficulty, input_examples, output_examples, test_input_filename, test_output_filename))
+            conn.commit()
+            conn.close()
+            
+            flash('Problem added successfully', 'success')
+            return redirect(url_for('dashboard'))
+        
+        return render_template('add_problem.html')
+    else:
+        flash('You need to log in as admin to add a problem.', 'error')
+        return redirect(url_for('login'))
+
+@app.route('/submission/<int:submission_id>')
+def view_submission(submission_id):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM submissions WHERE id = ?', (submission_id,))
+    submission = c.fetchone()
+    conn.close()
+    return render_template('view_submission.html', code=submission[3])
+
+@app.route('/admin/edit_problem/<int:problem_id>', methods=['GET', 'POST'])
+def edit_problem(problem_id):
+    if 'email' in session and session['is_admin']:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+
+        if request.method == 'POST':
+            # Get updated problem data from form
+            title = request.form['title']
+            description = request.form['description']
+            difficulty = request.form['difficulty']
+            input_examples = request.form['input_examples']
+            output_examples = request.form['output_examples']
+
+            # Update problem in database
+            c.execute('UPDATE problems SET title=?, description=?, difficulty=?, input_examples=?, output_examples=? WHERE id=?', 
+                    (title, description, difficulty, input_examples, output_examples, problem_id))
+            conn.commit()
+
+            flash('Problem updated successfully', 'success')
+            return redirect(url_for('dashboard'))
+
+        # Query problem data for the form
+        c.execute('SELECT * FROM problems WHERE id = ?', (problem_id,))
+        problem = c.fetchone()
+        conn.close()
+
+        return render_template('edit_problem.html', problem=problem)
     return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
