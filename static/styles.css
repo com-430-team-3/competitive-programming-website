@@ -8,12 +8,11 @@ body {
 .container {
     max-width: 600px;
     margin: 50px auto;
-    padding: 20px;
+    padding: 20px 40px 20px 20px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     text-align: center;
-    /* Center align content */
 }
 
 h1 {
@@ -22,7 +21,6 @@ h1 {
 
 form {
     margin-bottom: 20px;
-    /* Add margin below form */
 }
 
 label {
@@ -32,7 +30,9 @@ label {
 
 input[type="text"],
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+textarea,
+select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
@@ -45,20 +45,17 @@ a.btn {
     display: inline-block;
     padding: 10px 20px;
     background-color: #28a745;
-    /* Green background color */
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     text-decoration: none;
     margin: 0 10px;
-    /* Add margin around buttons */
 }
 
 button.btn:hover,
 a.btn:hover {
     background-color: #218838;
-    /* Darker green on hover */
 }
 
 ul {
